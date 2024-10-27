@@ -6,13 +6,11 @@
 
 	let isLoadingUsers = $state(false);
 
-	let currentUser = $state(null);
-
 	let isSearching = $state(false);
 
-	let searchResults = $state([]);
+	let deletingUserID = $state(0);
 
-	let modal = $state(null);
+	let searchResults = $state([]);
 
 	let searchInput;
 
@@ -68,27 +66,33 @@
 		users = [...users, user];
 	};
 
-	const showUser = ({
+	/* const showUser = ({
 		currentTarget: {
 			dataset: { id }
 		}
 	}) => {
 		currentUser = users.find((user) => user.id === +id);
 		modal.showModal();
-	};
+	}; */
 
-	$effect(() => console.log(modal));
+	const deleteUser = async ({ currentTarget }) => {
+		const id = +currentTarget.dataset.id;
+		deletingUserID = id;
 
-	const deleteUser = ({
-		currentTarget: {
-			dataset: { id }
-		}
-	}) => {
-		console.log({ id });
-	};
-
-	const closeModal = () => {
-		modal.close();
+		fetch(`${USERS_API}${id}`, {
+			method: 'DELETE'
+		})
+			.then((res) => res.json())
+			.then((data) => {
+				const { isDeleted } = data;
+				if (isDeleted) {
+					console.log('Deleted');
+					users = users.filter((user) => user.id !== id);
+				}
+			})
+			.finally(() => {
+				deletingUserID = 0;
+			});
 	};
 
 	const loadUsers = async () => {
@@ -168,10 +172,19 @@
 					</td>
 					<td data-title="Actions">
 						<div role="group">
-							<button class="secondary" type="button" data-id={id} onclick={deleteUser}
-								><Trash /></button
+							<button
+								class="secondary"
+								type="button"
+								data-id={id}
+								aria-busy={deletingUserID === id}
+								disabled={deletingUserID === id}
+								onclick={deleteUser}
 							>
-							<button type="button" data-id={id} onclick={showUser}><Info /></button>
+								{#if deletingUserID !== id}
+									<Trash />
+								{/if}
+							</button>
+							<button type="button" data-id={id} disabled={deletingUserID === id}><Info /></button>
 						</div>
 					</td>
 				</tr>
@@ -183,29 +196,6 @@
 		</tbody>
 	</table>
 {/if}
-
-<dialog bind:this={modal}>
-	<article>
-		<header>
-			<button aria-label="close" rel="prev" onclick={closeModal}></button>
-			<h2>
-				<User size="1.5cap" />
-				User Info
-			</h2>
-		</header>
-		<ul>
-			<li><strong>Name: </strong>{currentUser?.firstName}</li>
-			<li><strong>Lastname: </strong>{currentUser?.lastName}</li>
-			<li><strong>Age: </strong>{currentUser?.age}</li>
-			<li><strong>Email: </strong>{currentUser?.email}</li>
-			<li><strong>Username: </strong>{currentUser?.username}</li>
-			<li><strong>Role:</strong>{currentUser?.role}</li>
-		</ul>
-		<footer>
-			<button onclick={closeModal}>Close</button>
-		</footer>
-	</article>
-</dialog>
 
 <style>
 	td:nth-child(3):last-child {
@@ -235,10 +225,5 @@
 			font-weight: bold;
 			content: attr(data-title) ':';
 		}
-	}
-
-	dialog h2 {
-		display: flex;
-		gap: 0.25rem;
 	}
 </style>

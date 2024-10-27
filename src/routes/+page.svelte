@@ -61,7 +61,7 @@
 
 	const addUser = ({ currentTarget: { value } }) => {
 		const user = searchResults.find(({ id }) => id === +value);
-		users = [...users, user];
+		users.unshift(user);
 	};
 
 	/* const showUser = ({

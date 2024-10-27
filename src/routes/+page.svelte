@@ -1,6 +1,5 @@
 <script>
 	import autoAnimate from '@formkit/auto-animate';
-	import { onMount } from 'svelte';
 	import { Eraser, Info, Trash, UserRoundPlus } from 'lucide-svelte';
 
 	let users = $state([]);
@@ -42,7 +41,6 @@
 		isSearching = true;
 
 		if (FETCH_CACHE.has(query)) {
-			console.log('Cached...');
 			searchResults = FETCH_CACHE.get(query);
 			isSearching = false;
 			return;
@@ -53,7 +51,6 @@
 			.then((data) => {
 				const { users } = data;
 
-				console.log('Fetched...');
 				FETCH_CACHE.set(query, users);
 				searchResults = users;
 			})
@@ -87,7 +84,6 @@
 			.then((data) => {
 				const { isDeleted } = data;
 				if (isDeleted) {
-					console.log('Deleted');
 					users = users.filter((user) => user.id !== id);
 				}
 			})
@@ -112,9 +108,11 @@
 			.finally(() => (isLoadingUsers = false));
 	};
 
-	onMount(() => {
+	$effect(() => {
 		loadUsers();
 	});
+
+	$inspect({ users });
 </script>
 
 <h1>Users Demo</h1>

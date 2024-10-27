@@ -1,6 +1,7 @@
 <script>
+	import autoAnimate from '@formkit/auto-animate';
 	import { onMount } from 'svelte';
-	import { Eraser, Info, Trash, User, UserRoundPlus } from 'lucide-svelte';
+	import { Eraser, Info, Trash, UserRoundPlus } from 'lucide-svelte';
 
 	let users = $state([]);
 
@@ -137,21 +138,23 @@
 		{/if}
 	</button>
 </search>
-{#if searchResults.length}
-	<article>
-		{#each searchResults as { id, firstName, lastName } (id)}
-			<div role="group">
-				<input type="text" value={`${firstName} ${lastName}`} readonly />
-				<button
-					type="button"
-					value={id}
-					disabled={users.find((user) => user.id === id)}
-					onclick={addUser}><UserRoundPlus /></button
-				>
-			</div>
-		{/each}
-	</article>
-{/if}
+<div use:autoAnimate>
+	{#if searchResults.length}
+		<article>
+			{#each searchResults as { id, firstName, lastName } (id)}
+				<div role="group">
+					<input type="text" value={`${firstName} ${lastName}`} readonly />
+					<button
+						type="button"
+						value={id}
+						disabled={users.find((user) => user.id === id)}
+						onclick={addUser}><UserRoundPlus /></button
+					>
+				</div>
+			{/each}
+		</article>
+	{/if}
+</div>
 {#if !isLoadingUsers}
 	<table>
 		<thead>
@@ -161,7 +164,7 @@
 				<th scope="col">Actions</th>
 			</tr>
 		</thead>
-		<tbody>
+		<tbody use:autoAnimate>
 			{#each users as { id, firstName, email } (id)}
 				<tr>
 					<td data-title="User">

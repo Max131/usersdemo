@@ -5,7 +5,7 @@
 
 	let users = $state([]);
 
-	let isLoadingUsers = $state(false);
+	let isLoadingUsers = $state(true);
 
 	let isSearching = $state(false);
 
@@ -119,9 +119,6 @@
 
 <h1>Users Demo</h1>
 
-<!-- {#if isLoadingUsers}
-	<div aria-busy={isLoadingUsers}>Loading</div>
-{/if} -->
 <search role="search">
 	<input type="search" bind:this={searchInput} oninput={searchUsers} />
 	<button
@@ -139,6 +136,9 @@
 	</button>
 </search>
 <div use:autoAnimate>
+	{#if isLoadingUsers}
+		<div aria-busy={isLoadingUsers}>Loading users...</div>
+	{/if}
 	{#if searchResults.length}
 		<article>
 			{#each searchResults as { id, firstName, lastName } (id)}

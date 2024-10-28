@@ -1,5 +1,6 @@
 <script>
-	import autoAnimate from '@formkit/auto-animate';
+	import { fade, fly } from 'svelte/transition';
+	import { flip } from 'svelte/animate';
 	import { Eraser, Info, Trash, UserRoundPlus } from 'lucide-svelte';
 
 	let users = $state([]);
@@ -133,26 +134,27 @@
 		{/if}
 	</button>
 </search>
-<div use:autoAnimate>
-	{#if isLoadingUsers}
-		<div aria-busy={isLoadingUsers}>Loading users...</div>
-	{/if}
-	{#if searchResults.length}
-		<article>
-			{#each searchResults as { id, firstName, lastName } (id)}
-				<div role="group">
-					<input type="text" value={`${firstName} ${lastName}`} readonly />
-					<button
-						type="button"
-						value={id}
-						disabled={users.find((user) => user.id === id)}
-						onclick={addUser}><UserRoundPlus /></button
-					>
-				</div>
-			{/each}
-		</article>
-	{/if}
-</div>
+
+{#if isLoadingUsers}
+	<div aria-busy={isLoadingUsers} transition:fade>Loading users...</div>
+{/if}
+
+{#if searchResults.length}
+	<article>
+		{#each searchResults as { id, firstName, lastName }, index (id)}
+			<div role="group" transition:fly|global={{ x: 100, delay: index * 100 }}>
+				<input type="text" value={`${firstName} ${lastName}`} readonly />
+				<button
+					type="button"
+					value={id}
+					disabled={users.find((user) => user.id === id)}
+					onclick={addUser}><UserRoundPlus /></button
+				>
+			</div>
+		{/each}
+	</article>
+{/if}
+
 {#if !isLoadingUsers}
 	<table>
 		<thead>
@@ -162,9 +164,9 @@
 				<th scope="col">Actions</th>
 			</tr>
 		</thead>
-		<tbody use:autoAnimate>
+		<tbody>
 			{#each users as { id, firstName, email } (id)}
-				<tr>
+				<tr animate:flip={{ duration: 400 }}>
 					<td data-title="User">
 						<label for={`user-${id}`}>{firstName}</label>
 					</td>

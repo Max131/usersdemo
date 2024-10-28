@@ -25,7 +25,6 @@
 		"vite": "^5.0.3"
 	},
 	"dependencies": {
-		"@formkit/auto-animate": "^0.8.2",
 		"@picocss/pico": "^2.0.6",
 		"lucide-svelte": "^0.453.0"
 	}

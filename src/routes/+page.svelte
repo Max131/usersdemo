@@ -42,7 +42,8 @@
 
 		isSearching = true;
 
-		if (QUERY_CACHE.has(query)) {
+		// if (QUERY_CACHE.has(query)) {
+		if ([...QUERY_CACHE].some((cachedQuery) => cachedQuery.includes(query))) {
 			searchResults = USERS_CACHE.filter(({ firstName, lastName }) =>
 				[firstName, lastName].some((item) => item.toLowerCase().includes(query))
 			);

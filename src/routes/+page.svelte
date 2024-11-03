@@ -15,7 +15,8 @@
 
 	let searchInput;
 
-	const FETCH_CACHE = new Map();
+	const QUERY_CACHE = new Set();
+	let USERS_CACHE = $state([]);
 
 	const USERS_API = 'https://dummyjson.com/users/';
 
@@ -41,8 +42,10 @@
 
 		isSearching = true;
 
-		if (FETCH_CACHE.has(query)) {
-			searchResults = FETCH_CACHE.get(query);
+		if (QUERY_CACHE.has(query)) {
+			searchResults = USERS_CACHE.filter(({ firstName, lastName }) =>
+				[firstName, lastName].some((item) => item.toLowerCase().includes(query))
+			);
 			isSearching = false;
 			return;
 		}
@@ -52,7 +55,12 @@
 			.then((data) => {
 				const { users } = data;
 
-				FETCH_CACHE.set(query, users);
+				QUERY_CACHE.add(query);
+				const filteredUsers = users.filter(
+					(user) => !USERS_CACHE.find((cachedUser) => cachedUser.id === user.id)
+				);
+				USERS_CACHE = [...USERS_CACHE, ...filteredUsers];
+
 				searchResults = users;
 			})
 			.finally(() => {
@@ -105,6 +113,7 @@
 			.then((response) => response.json())
 			.then((data) => {
 				users = data.users;
+				USERS_CACHE = data.users;
 			})
 			.finally(() => (isLoadingUsers = false));
 	};
@@ -112,8 +121,6 @@
 	$effect(() => {
 		loadUsers();
 	});
-
-	$inspect({ users });
 </script>
 
 <h1>Users Demo</h1>

@@ -1,40 +1,85 @@
 <script>
+	// Importar transiciones y animaciones de Svelte
 	import { fade, fly } from 'svelte/transition';
 	import { flip } from 'svelte/animate';
 	import { Eraser, Info, Trash, UserRoundPlus } from 'lucide-svelte';
 
+	/**
+	 * Lista de usuarios seleccionados por el usuario.
+	 * @type {Array<{id: number, firstName: string, lastName: string, email: string}>}
+	 */
 	let users = $state([]);
 
+	/**
+	 * Indica si los usuarios están siendo cargados desde la API.
+	 * @type {boolean}
+	 */
 	let isLoadingUsers = $state(true);
 
+	/**
+	 * Indica si una búsqueda de usuarios está en curso.
+	 * @type {boolean}
+	 */
 	let isSearching = $state(false);
 
+	/**
+	 * ID del usuario que está siendo eliminado actualmente.
+	 * @type {number}
+	 */
 	let deletingUserID = $state(0);
 
+	/**
+	 * Resultados obtenidos de la búsqueda de usuarios.
+	 * @type {Array<{id: number, firstName: string, lastName: string, email: string}>}
+	 */
 	let searchResults = $state([]);
 
+	/**
+	 * Referencia al elemento input para realizar búsquedas.
+	 * @type {HTMLInputElement}
+	 */
 	let searchInput;
 
+	/**
+	 * Caché de consultas realizadas previamente.
+	 * @type {Set<string>}
+	 */
 	const QUERY_CACHE = new Set();
+
+	/**
+	 * Caché local de usuarios obtenidos de la API.
+	 * @type {Array<{id: number, firstName: string, lastName: string, email: string}>}
+	 */
 	let USERS_CACHE = $state([]);
 
+	/**
+	 * URL base de la API para gestionar usuarios.
+	 * @constant {string}
+	 */
 	const USERS_API = 'https://dummyjson.com/users/';
 
+	/**
+	 * Función que crea un decorador de debounce para evitar llamadas consecutivas.
+	 * @param {Function} callback - Función a ejecutar.
+	 * @param {number} [wait=300] - Tiempo de espera en milisegundos.
+	 * @returns {Function} - Función decorada con debounce.
+	 */
 	function debounce(callback, wait = 300) {
 		let timer;
-
 		return (...args) => {
 			clearTimeout(timer);
-
-			timer = setTimeout(() => {
-				callback(...args);
-			}, wait);
+			timer = setTimeout(() => callback(...args), wait);
 		};
 	}
 
+	/**
+	 * Realiza una búsqueda de usuarios con debounce.
+	 * @param {InputEvent} event - Evento de entrada.
+	 */
 	const searchUsers = debounce(async ({ target }) => {
 		const query = target.value.toLowerCase();
 
+		// Si la consulta está vacía, limpia los resultados
 		if (!query.trim()) {
 			searchResults = [];
 			return;
@@ -42,7 +87,7 @@
 
 		isSearching = true;
 
-		// if (QUERY_CACHE.has(query)) {
+		// Verifica si la consulta está en caché
 		if ([...QUERY_CACHE].some((cachedQuery) => cachedQuery.includes(query))) {
 			searchResults = USERS_CACHE.filter(({ firstName, lastName }) =>
 				[firstName, lastName].some((item) => item.toLowerCase().includes(query))
@@ -51,17 +96,16 @@
 			return;
 		}
 
+		// Realiza la búsqueda en la API
 		fetch(`${USERS_API}search?q=${query}&limit=5`)
 			.then((response) => response.json())
 			.then((data) => {
 				const { users } = data;
-
 				QUERY_CACHE.add(query);
 				const filteredUsers = users.filter(
 					(user) => !USERS_CACHE.find((cachedUser) => cachedUser.id === user.id)
 				);
 				USERS_CACHE = [...USERS_CACHE, ...filteredUsers];
-
 				searchResults = users;
 			})
 			.finally(() => {
@@ -69,20 +113,19 @@
 			});
 	});
 
+	/**
+	 * Añade un usuario desde los resultados de búsqueda.
+	 * @param {InputEvent} event - Evento de entrada.
+	 */
 	const addUser = ({ currentTarget: { value } }) => {
 		const user = searchResults.find(({ id }) => id === +value);
 		users.unshift(user);
 	};
 
-	/* const showUser = ({
-		currentTarget: {
-			dataset: { id }
-		}
-	}) => {
-		currentUser = users.find((user) => user.id === +id);
-		modal.showModal();
-	}; */
-
+	/**
+	 * Elimina un usuario por su ID.
+	 * @param {MouseEvent} event - Evento del botón de eliminar.
+	 */
 	const deleteUser = async ({ currentTarget }) => {
 		const id = +currentTarget.dataset.id;
 		deletingUserID = id;
@@ -92,8 +135,7 @@
 		})
 			.then((res) => res.json())
 			.then((data) => {
-				const { isDeleted } = data;
-				if (isDeleted) {
+				if (data.isDeleted) {
 					users = users.filter((user) => user.id !== id);
 				}
 			})
@@ -102,10 +144,14 @@
 			});
 	};
 
+	/**
+	 * Carga inicial de usuarios desde la API.
+	 */
 	const loadUsers = async () => {
 		const controller = new AbortController();
 		const { signal } = controller;
 
+		// Define un timeout para cancelar la solicitud
 		setTimeout(() => {
 			controller.abort();
 		}, 5000);
@@ -116,9 +162,12 @@
 				users = data.users;
 				USERS_CACHE = data.users;
 			})
-			.finally(() => (isLoadingUsers = false));
+			.finally(() => {
+				isLoadingUsers = false;
+			});
 	};
 
+	// Efecto que carga los usuarios al inicializar el componente
 	$effect(() => {
 		loadUsers();
 	});
